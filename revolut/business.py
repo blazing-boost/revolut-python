@@ -39,12 +39,22 @@ class BusinessClient(base.BaseClient, utils._SetEnv):
             return self._counterparties
         _counterparties = {}
         _cptbyaccount = {}
-        data = self._get("counterparties")
-        for cptdat in data:
-            cpt = Counterparty(client=self, **cptdat)
-            _counterparties[cpt.id] = cpt
-            for cptaccid in cpt.accounts.keys():  # type: ignore
-                _cptbyaccount[cptaccid] = cpt
+        before = None
+        while True:
+            params = {"limit": 100}
+            if before is not None:
+                params["created_before"] = before
+            page = self._get("counterparties", params)
+            if not page:
+                break
+            for cptdat in page:
+                cpt = Counterparty(client=self, **cptdat)
+                _counterparties[cpt.id] = cpt
+                for cptaccid in (cpt.accounts or {}).keys():  # type: ignore
+                    _cptbyaccount[cptaccid] = cpt
+            if len(page) < 100:
+                break
+            before = page[-1]["created_at"]
         self._counterparties = _counterparties
         self._cptbyaccount = _cptbyaccount
         return self._counterparties

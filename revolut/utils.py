@@ -2,7 +2,10 @@ import datetime
 import dateutil.parser
 from decimal import Decimal
 import json
+import logging
 import jwt
+
+_log = logging.getLogger(__name__)
 
 
 def _obj2id(obj):
@@ -51,9 +54,7 @@ class _UpdateFromKwargsMixin(object):
     def _update(self, **kwargs):
         for k, v in kwargs.items():
             if not hasattr(self, k):
-                raise ValueError(
-                    "Excess keyword for {}: {} = {}".format(type(self), k, v)
-                )
+                _log.warning("Excess keyword for %s: %s = %r", type(self), k, v)
             setattr(self, k, v)
 
 
